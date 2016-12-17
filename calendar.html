@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<script type="text/javascript" src="jquery.js"></script>
+	<style type="text/css">
+		* {
+			margin: 0;
+			padding: 0;
+			list-style: none;
+		}
+		.wrapper {
+			overflow: hidden;
+			margin: 100px auto;
+			width: 1000px;
+			border: 1px solid black;
+		}
+		.wrapper .nowTime {
+			float:left;
+			width: 400px;
+		}
+		.wrapper .nextTime {
+			float: right;
+			width: 400px;
+		}
+		.wrapper .title {
+			font-size: 18px;
+			font-weight: 900px;
+			color: #fff;
+			background-color: deepskyblue;
+			overflow: hidden;
+		}
+		.wrapper .title div {
+			height: 50px;
+			line-height: 50px;
+			text-align: center;
+		}
+		.wrapper .title .left {
+			width: 50px;
+			height: 50px;
+			float: left;
+			cursor: pointer;
+		}
+		.wrapper .title .left:hover {
+			color: black;
+		}
+		.wrapper .title .right {
+			width: 50px;
+			float: right;
+			cursor: pointer;
+		}
+		.wrapper .title .right:hover {
+			color: black;
+		}
+		.wrapper table {
+			width: 400px;
+			text-align: center;
+			border-collapse: collapse;
+		}
+		.wrapper table th {
+			border: 1px solid lightslategray;
+			height: 40px;
+		}
+		.wrapper table td {
+			border: 1px solid gray;
+			height: 40px;
+		}
+		.wrapper .red {
+			color: red;
+		}
+		.wrapper .blue {
+			color: blue;
+		}
+	</style>
+</head>
+<body>
+	<div class="wrapper">
+		<div class="nowTime" id="nowTime">
+		</div>
+		<div class="nextTime" id="nextTime">
+		</div>
+	</div>
+	<script type="text/javascript">
+		var $NowTime = $('.nowTime');
+		var $NextTime = $('.nextTime');
+
+		var oDate = new Date();
+		var oNowMonth = oDate.getMonth() + 1;
+		var oNowDay = oDate.getDate();
+		var oNowYear = oDate.getFullYear();
+		//日历初始化
+		function init() {
+			var oDate = new Date();
+			//当前时间获取
+			var dataDate = {};
+			dataDate.oDateObj = oDate;
+			dataDate.year = oDate.getFullYear();
+			dataDate.month = oDate.getMonth() + 1;
+			//生成左侧日历
+			showDate($NowTime, dataDate);
+			//生成右侧日历
+			if (dataDate.month === 12) {
+				dataDate.year += 1;
+				dataDate.month = 1;
+				showDate($NextTime, dataDate);
+			}else {
+				dataDate.month += 1;
+				showDate($NextTime, dataDate);
+			}
+		}
+		init();
+		//切换日历页面时调用
+		function turnPage(event) {
+			//获取当前月下三个span
+			var oNowSpan = $('.title').eq(0).find('span');
+			var oNextSpan = $('.title').eq(1).find('span');
+			var oDate = new Date();
+			var dataDate = {};
+			dataDate.oDateObj = oDate;
+
+			$NowTime.html('');
+			$NextTime.html('');
+			if (this.className === 'left') {
+				//第一个span是上一个月，第二个span是当前年，第三个span是当前月份
+				var month = parseInt(oNowSpan.eq(0).html());
+				var year = parseInt(oNowSpan.eq(1).html());
+				dataDate.month = month;
+
+				if(month === 12){
+					dataDate.year = year-1;
+					dataDate.month = month;
+					showDate($NowTime,dataDate);
+					dataDate.year = year;
+					dataDate.month = 1;
+					showDate($NextTime,dataDate);
+				}else{
+					dataDate.year = year;
+					dataDate.month = month;
+					showDate($NowTime,dataDate);
+					dataDate.month = month + 1;
+					showDate($NextTime,dataDate);
+				}				
+			}else {
+				var month = parseInt(oNextSpan.eq(0).html());
+				var year = parseInt(oNextSpan.eq(1).html());
+				dataDate.month = month;
+				if(month === 1){
+					dataDate.year = year;
+					dataDate.month = 12;
+					showDate($NowTime,dataDate);
+
+					dataDate.year = year+1;
+					dataDate.month = month;
+					showDate($NextTime,dataDate);
+
+				}else{
+					dataDate.year = year;
+					dataDate.month = month - 1;
+					showDate($NowTime,dataDate);
+					dataDate.month = month;
+					showDate($NextTime,dataDate);
+				}				
+			}
+			
+		}
+		//绑定点击事件
+		function bindEvent() {
+			var oSpanLeft = $('#left');
+			var oSpanRight = $('#right');		
+			oSpanLeft.on('click', turnPage);
+			oSpanRight.on('click', turnPage);
+		}
+		//是否为闰年
+		function isLeapYear(year) {
+			if (year % 4 === 0 && year % 100 !== 0) {
+				return true;
+			}else {
+				if (year % 400 === 0) {
+					return true;
+				}else {
+					return false;
+				}
+			}
+		}
+		function createDay(oTd, index, dayNumber, nowMonth, nowYear) {
+			for(var i = 0;i < dayNumber;++i){
+				oTd.eq(i + index).html(i + 1);
+				if((i+1)===oNowDay && nowMonth === oNowMonth && nowYear === oNowYear){
+					oTd.eq(i + index).attr('class', 'red');
+				}else if((i + 1) > oNowDay && nowMonth === oNowMonth && nowYear === oNowYear){
+					oTd.eq(i + index).attr('class', 'blue');
+				}
+			}			
+		}
+		//实现页面的管理,专门生成页面,只需要留有date接口就行
+		function showDate(dom, oDate) {
+			var $Title = $('<div />');
+			$Title.addClass('title');
+			//动态生成
+			var strDate = (dom.attr('class') == 'nowTime') ?  '<div class="left" id="left"><span>'+( (oDate.month-1) === 0? 12 : oDate.month-1)+'</span>月</div><div class="c"><span>' +oDate.year+'</span>年<span>'+oDate.month+'</span>月</div>' : '<div class="right" id="right"><span>'+(oDate.month + 1 === 13 ? 1 : oDate.month + 1)+'</span>月</div><div class="c"><span>'+oDate.year+'</span>年<span>'+oDate.month+'</span>月</div>';
+			$Title.html(strDate).appendTo(dom);
+			//绑定点击事件;
+			bindEvent();
+			var $Table = $('<table />');
+			var $Thead = $('<thead />');
+			var $Tr = $('<tr />');
+			var arrWeek = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+
+			for (var i = 0; i < 7; i++) {
+				$Tr.append('<th />');
+			}
+			$Tr.find('th').each(function(i, value) {
+				$(value).text(arrWeek[i]);
+				if(i == 5 || i == 6) {
+					$(value).addClass('red');
+				}
+			})
+			$Thead.appendTo($Table).append($Tr);
+			
+			var $Tbody = $('<tbody />');
+			for (var i = 0; i < 6; i++) {
+				var $Tr = $('<tr />');
+				for (var j = 0; j < 7; j++) {
+					var $Td = $('<td />');
+					$Td.appendTo($Tr);
+				}
+				$Tr.appendTo($Tbody);
+			}
+
+			$Table.append($Tbody).appendTo(dom);
+
+			var dayNumber;
+
+			if (oDate.month === 1|| oDate.month === 3 || oDate.month === 5 || oDate.month === 7 || oDate.month === 8 || oDate.month === 10 || oDate.month === 12) {
+				dayNumber = 31;
+			}else if (oDate.month === 4 || oDate.month === 6 || oDate.month === 9 || oDate.month === 11) {
+				dayNumber = 30;
+			}else if (oDate.month === 2 && isLeapYear(oDate.year)) {
+				dayNumber = 29;
+			}else {
+				dayNumber = 28;
+			}
+
+			//获取当前年月日
+			var nowDay = oDate.oDateObj.getDate();
+			var nowMonth = oDate.month;
+			var nowYear = oDate.year;
+
+			//获取1号的信息，通过1号对后面信息进行定位，知道1好是周几。下面设置当前牛月日
+			oDate.oDateObj.setFullYear(oDate.year);
+			oDate.oDateObj.setMonth(oDate.month - 1);
+			oDate.oDateObj.setDate(1);
+			var $TdCollection = dom.find('td');
+			switch (oDate.oDateObj.getDay()){
+			//0表示的是周天,所以0船进入的index是6
+			case 0:
+					createDay($TdCollection,6,dayNumber,nowMonth, nowYear);
+				break;
+			case 1:
+					createDay($TdCollection,0,dayNumber,nowMonth, nowYear);
+				break;
+
+			case 2:
+					createDay($TdCollection,1,dayNumber,nowMonth, nowYear);
+				break;
+			case 3:
+					createDay($TdCollection,2,dayNumber,nowMonth, nowYear);
+				break;
+			case 4:
+					createDay($TdCollection,3,dayNumber,nowMonth, nowYear);
+				break;
+			case 5:
+					createDay($TdCollection,4,dayNumber,nowMonth, nowYear);
+				break;
+			case 6:
+					createDay($TdCollection,5,dayNumber,nowMonth, nowYear);
+				break;
+			}
+		}
+
+	</script>
+</body>
+</html>
